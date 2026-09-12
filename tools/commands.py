@@ -28,7 +28,7 @@ from .paths import (
 from .policies import tree_ignore_pattern
 from .remote import remote_precheck, require_remote_ready
 from .shell import rsync_argv, run_command, ssh_exec_script
-from .staging import normalize_path, read_staged_items, validate_staged_item, validated_staging_tempfile, write_staging
+from .staging import expand_paths, normalize_path, read_staged_items, validate_staged_item, validated_staging_tempfile, write_staging
 from .templates import (
     DEFAULT_ALLOWED,
     DEFAULT_DENY,
@@ -200,18 +200,31 @@ def command_preflight(_args: argparse.Namespace) -> int:
 
 
 def command_add(args: argparse.Namespace) -> int:
-    existing = read_staged_items()
-    changed = False
-    for raw_path in args.paths:
-        rel_path = validate_staged_item(raw_path)
-        if rel_path in existing:
-            print(f"{CYAN}Already staged:{NC} {rel_path}")
+    existing = set(read_staged_items())
+    ordered_items = read_staged_items()
+    force = getattr(args, "force", False)
+    new_files = expand_paths(args.paths, force=force)
+
+    added_count = 0
+    for f in new_files:
+        if f not in existing:
+            ordered_items.append(f)
+            existing.add(f)
+            added_count += 1
+            print(f"{GREEN}Staged:{NC} {f}")
         else:
-            existing.append(rel_path)
-            changed = True
-            print(f"{GREEN}Staged:{NC} {rel_path}")
-    if changed:
-        write_staging(existing)
+            if len(new_files) <= 5:
+                print(f"{CYAN}Already staged:{NC} {f}")
+
+    if added_count > 0:
+        write_staging(ordered_items)
+        if len(new_files) > 5:
+            print(f"\n{BOLD}Total added:{NC} {GREEN}{added_count}{NC} file(s).")
+    elif not new_files:
+        print(f"{YELLOW}No matching files to stage.{NC}")
+    else:
+        print(f"{CYAN}All specified files are already staged.{NC}")
+
     print(f"Run {CYAN}ship push{NC} to sync staged items to server.")
     return 0
 
@@ -224,9 +237,11 @@ def command_remove(args: argparse.Namespace) -> int:
     existing = read_staged_items()
     for raw_path in args.paths:
         rel_path = normalize_path(raw_path)
-        if rel_path in existing:
-            existing = [item for item in existing if item != rel_path]
-            print(f"{GREEN}Unstaged:{NC} {rel_path}")
+        matching = [item for item in existing if item == rel_path or item.startswith(f"{rel_path}/")]
+        if matching:
+            existing = [item for item in existing if item not in matching]
+            for item in matching:
+                print(f"{GREEN}Unstaged:{NC} {item}")
         else:
             print(f"{YELLOW}Not found in staging:{NC} {rel_path}")
     write_staging(existing)
@@ -347,6 +362,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=command_preflight)
 
     p = sub.add_parser("add", help="Add files or directories to staging")
+    p.add_argument("-f", "--force", action="store_true", help="Allow staging of files ignored by .shipignore")
     p.add_argument("paths", nargs="+")
     p.set_defaults(func=command_add)
 

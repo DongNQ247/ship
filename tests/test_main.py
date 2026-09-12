@@ -66,13 +66,27 @@ class ShipMainUnitTests(unittest.TestCase):
     def test_validate_staged_item_allows_regular_project_file(self):
         self.assertEqual(ship.validate_staged_item("README.md"), "README.md")
 
-    def test_validate_staged_item_rejects_ignored_path(self):
+    def test_expand_paths_rejects_ignored_path(self):
         (self.test_root / ".shipignore").write_text("temp_test_ignored.txt\n", encoding="utf-8")
         (self.test_root / "temp_test_ignored.txt").write_text("dummy", encoding="utf-8")
 
         with self.assertRaises(ship.DeployError) as cm:
-            ship.validate_staged_item("temp_test_ignored.txt")
+            ship.expand_paths(["temp_test_ignored.txt"])
         self.assertIn("ignored by .shipignore", str(cm.exception))
+
+        # Can force stage with force=True
+        self.assertEqual(ship.expand_paths(["temp_test_ignored.txt"], force=True), ["temp_test_ignored.txt"])
+
+    def test_expand_paths_recursively_expands_directory(self):
+        sub = self.test_root / "src" / "components"
+        sub.mkdir(parents=True)
+        (sub / "Button.jsx").write_text("export default Button;", encoding="utf-8")
+        (sub / "Header.jsx").write_text("export default Header;", encoding="utf-8")
+        (self.test_root / ".shipignore").write_text("*.log\n", encoding="utf-8")
+        (sub / "debug.log").write_text("log", encoding="utf-8")
+
+        expanded = ship.expand_paths(["src"])
+        self.assertEqual(expanded, ["src/components/Button.jsx", "src/components/Header.jsx"])
 
     def test_find_project_root_locates_ship_directory(self):
         sub_dir = self.test_root / "src" / "deep"

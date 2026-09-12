@@ -52,7 +52,7 @@ from tools.paths import (
 from tools.policies import deploy_path_denied, forbidden_deploy_path, path_ignored, path_matches_policy, read_policy_patterns, tree_ignore_pattern
 from tools.remote import remote_precheck, require_remote_ready
 from tools.shell import rsync_argv, run_command, ssh_exec_script
-from tools.staging import normalize_path, read_staged_items, validate_staged_item, validated_staging_tempfile, write_staging
+from tools.staging import expand_paths, normalize_path, read_staged_items, validate_staged_item, validated_staging_tempfile, write_staging
 from tools.ui import BOLD, CYAN, GREEN, NC, RED, YELLOW, die, print_err
 
 def cli() -> None:
