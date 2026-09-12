@@ -74,8 +74,9 @@ class ShipMainUnitTests(unittest.TestCase):
             ship.expand_paths(["temp_test_ignored.txt"])
         self.assertIn("ignored by .shipignore", str(cm.exception))
 
-        # Can force stage with force=True
-        self.assertEqual(ship.expand_paths(["temp_test_ignored.txt"], force=True), ["temp_test_ignored.txt"])
+        # Un-ignore via ! pattern in .shipignore
+        (self.test_root / ".shipignore").write_text("temp_test_ignored.txt\n!temp_test_ignored.txt\n", encoding="utf-8")
+        self.assertEqual(ship.expand_paths(["temp_test_ignored.txt"]), ["temp_test_ignored.txt"])
 
     def test_expand_paths_recursively_expands_directory(self):
         sub = self.test_root / "src" / "components"
@@ -141,6 +142,30 @@ class ShipMainUnitTests(unittest.TestCase):
         self.assertNotIn("app.log", expanded)
         self.assertNotIn("deep/nested/pkg/code.ts", expanded)
         self.assertIn("deep/nested/pkg/code.js", expanded)
+
+    def test_expand_paths_ignores_nested_node_modules_and_venv(self):
+        # Create nested client/node_modules and server/.venv
+        pkg = self.test_root / "client" / "node_modules" / "commander"
+        pkg.mkdir(parents=True)
+        (pkg / "CHANGELOG.md").write_text("changelog", encoding="utf-8")
+        (pkg / "LICENSE").write_text("license", encoding="utf-8")
+
+        venv = self.test_root / "server" / ".venv" / "bin"
+        venv.mkdir(parents=True)
+        (venv / "activate").write_text("source", encoding="utf-8")
+
+        src = self.test_root / "client" / "src"
+        src.mkdir(parents=True)
+        (src / "App.tsx").write_text("export default App;", encoding="utf-8")
+
+        from tools.templates import DEFAULT_SHIPIGNORE
+        (self.test_root / ".shipignore").write_text(DEFAULT_SHIPIGNORE, encoding="utf-8")
+
+        expanded = ship.expand_paths(["."])
+        self.assertIn("client/src/App.tsx", expanded)
+        self.assertNotIn("client/node_modules/commander/CHANGELOG.md", expanded)
+        self.assertNotIn("client/node_modules/commander/LICENSE", expanded)
+        self.assertNotIn("server/.venv/bin/activate", expanded)
 
     def test_find_project_root_locates_ship_directory(self):
         sub_dir = self.test_root / "src" / "deep"

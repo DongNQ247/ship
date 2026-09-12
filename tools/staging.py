@@ -52,7 +52,7 @@ def validate_staged_item(item: str) -> str:
     return rel_path
 
 
-def expand_paths(raw_paths: list[str], *, force: bool = False) -> list[str]:
+def expand_paths(raw_paths: list[str]) -> list[str]:
     root = paths.ROOT_DIR.resolve(strict=True)
     collected: list[str] = []
 
@@ -66,8 +66,8 @@ def expand_paths(raw_paths: list[str], *, force: bool = False) -> list[str]:
         if target.is_file():
             if forbidden_deploy_path(rel_path):
                 raise DeployError(f"Refusing to deploy local secret/control path '{rel_path}'.")
-            if not force and path_ignored(rel_path):
-                raise DeployError(f"Path '{rel_path}' is ignored by .shipignore. (Use -f/--force to override)")
+            if path_ignored(rel_path):
+                raise DeployError(f"Path '{rel_path}' is ignored by .shipignore. Use '!{rel_path}' in .shipignore to un-ignore.")
             if rel_path not in collected:
                 collected.append(rel_path)
         elif target.is_dir():
@@ -87,7 +87,7 @@ def expand_paths(raw_paths: list[str], *, force: bool = False) -> list[str]:
                     sub_rel = f"{rel_dir}/{d}" if rel_dir != "." else d
                     if sub_rel in {".git", ".ship"} or forbidden_deploy_path(sub_rel):
                         continue
-                    if not force and (path_ignored(sub_rel) or path_ignored(f"{sub_rel}/")):
+                    if path_ignored(sub_rel) or path_ignored(f"{sub_rel}/"):
                         continue
                     filtered_dirs.append(d)
                 dirnames[:] = filtered_dirs
@@ -96,7 +96,7 @@ def expand_paths(raw_paths: list[str], *, force: bool = False) -> list[str]:
                     f_rel = f"{rel_dir}/{f}" if rel_dir != "." else f
                     if forbidden_deploy_path(f_rel):
                         continue
-                    if not force and path_ignored(f_rel):
+                    if path_ignored(f_rel):
                         continue
                     if f_rel not in collected:
                         collected.append(f_rel)

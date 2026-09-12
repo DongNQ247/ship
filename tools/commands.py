@@ -202,8 +202,7 @@ def command_preflight(_args: argparse.Namespace) -> int:
 def command_add(args: argparse.Namespace) -> int:
     existing = set(read_staged_items())
     ordered_items = read_staged_items()
-    force = getattr(args, "force", False)
-    new_files = expand_paths(args.paths, force=force)
+    new_files = expand_paths(args.paths)
 
     added_count = 0
     for f in new_files:
@@ -362,7 +361,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=command_preflight)
 
     p = sub.add_parser("add", help="Add files or directories to staging")
-    p.add_argument("-f", "--force", action="store_true", help="Allow staging of files ignored by .shipignore")
     p.add_argument("paths", nargs="+")
     p.set_defaults(func=command_add)
 
