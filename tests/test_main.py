@@ -167,6 +167,21 @@ class ShipMainUnitTests(unittest.TestCase):
         self.assertNotIn("client/node_modules/commander/LICENSE", expanded)
         self.assertNotIn("server/.venv/bin/activate", expanded)
 
+    def test_command_reset_clears_all_or_specific_paths(self):
+        import argparse
+        (self.test_root / "a.py").write_text("a", encoding="utf-8")
+        (self.test_root / "b.py").write_text("b", encoding="utf-8")
+        (self.test_root / "c.py").write_text("c", encoding="utf-8")
+        ship.write_staging(["a.py", "b.py", "c.py"])
+
+        # Unstage specific file
+        ship.command_reset(argparse.Namespace(paths=["b.py"]))
+        self.assertEqual(ship.read_staged_items(), ["a.py", "c.py"])
+
+        # Reset all staging
+        ship.command_reset(argparse.Namespace(paths=[]))
+        self.assertEqual(ship.read_staged_items(), [])
+
     def test_find_project_root_locates_ship_directory(self):
         sub_dir = self.test_root / "src" / "deep"
         sub_dir.mkdir(parents=True)

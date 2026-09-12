@@ -170,7 +170,7 @@ rm -f "$TEMP_SYMLINK"
 
 # Test 1.5: Valid path within project root
 assert_success "Allow valid project path (README.md)" $SHIP_CLI add README.md
-$SHIP_CLI remove README.md >/dev/null 2>&1
+$SHIP_CLI reset README.md >/dev/null 2>&1
 
 # Test 1.6: Missing paths are rejected before they enter staging
 assert_failure "Reject missing local path during add" $SHIP_CLI add missing/path/for/deploy.txt

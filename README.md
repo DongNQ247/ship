@@ -159,13 +159,13 @@ ship push
 ship push -v
 ```
 
-### 7. Unstage or Clean
+### 7. Reset Staging or Clean Remote
 ```bash
-# Unstage specific paths
-ship remove src/temp.py
+# Reset entire staging area (clear all staged files)
+ship reset
 
-# Clear entire staging area
-ship remove --all
+# Unstage specific paths from staging area
+ship reset src/temp.py
 
 # Clean remote destination directory (guarded)
 ship clean -n   # Dry-run
@@ -199,8 +199,8 @@ Dry-run (`-n` or `--dry-run`) lets you simulate actions safely without modifying
 | `ship init` | Initialize `.ship/` workspace and `.shipignore` | `--no-input` |
 | `ship preflight` | Check environment tools and test SSH connection | |
 | `ship add <paths...>` | Stage files or directories for deployment | |
-| `ship remove <paths...>` | Remove paths from staging manifest | `--all` |
-| `ship status` | View workspace structure and staged files | `-L <depth>` |
+| `ship reset [paths...]` | Reset staging area or unstage specific paths | |
+| `ship status` | View workspace tree and currently staged items | `-L <depth>` |
 | `ship inspect [depth]` | Inspect remote directory tree | `depth` (default: 2) |
 | `ship push` | Synchronize staged items to remote server | `-n` (dry-run), `-v` (verbose) |
 | `ship clean` | Delete remote destination folder | `-n` (dry-run), `-y` (yes) |

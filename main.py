@@ -17,7 +17,7 @@ from tools.commands import (
     command_inspect,
     command_preflight,
     command_push,
-    command_remove,
+    command_reset,
     command_status,
     load_config_or_die,
     main,

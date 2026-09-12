@@ -228,10 +228,10 @@ def command_add(args: argparse.Namespace) -> int:
     return 0
 
 
-def command_remove(args: argparse.Namespace) -> int:
-    if not args.paths or args.all:
+def command_reset(args: argparse.Namespace) -> int:
+    if not args.paths:
         write_staging([])
-        print(f"{GREEN}Staging cleared:{NC} .ship/state/files is now empty.")
+        print(f"{GREEN}Staging reset:{NC} .ship/state/files is now empty.")
         return 0
     existing = read_staged_items()
     for raw_path in args.paths:
@@ -364,10 +364,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("paths", nargs="+")
     p.set_defaults(func=command_add)
 
-    p = sub.add_parser("remove", aliases=["rm"], help="Remove files or directories from staging")
+    p = sub.add_parser("reset", help="Reset staging area or unstage specific files/directories")
     p.add_argument("paths", nargs="*")
-    p.add_argument("--all", action="store_true")
-    p.set_defaults(func=command_remove)
+    p.set_defaults(func=command_reset)
 
     p = sub.add_parser("status", help="Show workspace tree and currently staged items")
     p.add_argument("depth_pos", nargs="?", type=int)
