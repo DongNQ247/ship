@@ -26,30 +26,21 @@ A lightweight, secure deployment CLI using a Git-like staging model and guardrai
 
 ### Installation
 
-#### Option 1: Install from PyPI (Recommended)
-```bash
-# Using pip
-pip install ship-cli
-
-# Or using pipx (isolated environment for CLI tools)
-pipx install ship-cli
-```
-This automatically registers the `ship` executable in your PATH.
-
-#### Option 2: Direct from Git
+#### Option 1: Direct from Git (Recommended)
 Install directly from GitHub via `pip` or `pipx`:
 ```bash
 # Using pip
-pip install git+https://github.com/<username>/ship.git
+pip install git+https://github.com/DongNQ247/ship.git
 
-# Or using pipx
-pipx install git+https://github.com/<username>/ship.git
+# Or using pipx (isolated environment for CLI tools)
+pipx install git+https://github.com/DongNQ247/ship.git
 ```
+This automatically registers the `ship` executable in your PATH.
 
-#### Option 3: From Local Source
+#### Option 2: From Local Source
 Clone the repository and install:
 ```bash
-git clone https://github.com/<username>/ship.git
+git clone https://github.com/DongNQ247/ship.git
 cd ship
 
 # Standard installation
@@ -59,7 +50,7 @@ pip install .
 pip install -e .
 ```
 
-#### Option 4: Shell Alias
+#### Option 3: Shell Alias
 Add the following line to your `~/.bashrc` or `~/.zshrc`:
 ```bash
 alias ship="python3 /path/to/ship/main.py"
@@ -69,12 +60,31 @@ Reload your shell configuration:
 source ~/.bashrc  # or source ~/.zshrc
 ```
 
-#### Option 5: Symlink to PATH
+#### Option 4: Symlink to PATH
 ```bash
 mkdir -p ~/.local/bin
 ln -sf /path/to/ship/main.py ~/.local/bin/ship
 chmod +x /path/to/ship/main.py
 ```
+
+### Uninstallation
+
+#### If installed via pip
+```bash
+pip uninstall ship-cli -y
+```
+
+#### If installed via pipx
+```bash
+pipx uninstall ship-cli
+```
+
+#### If using Shell Alias or Symlink
+- **Alias:** Remove the `alias ship="..."` line from `~/.bashrc` or `~/.zshrc` and run `source ~/.bashrc`.
+- **Symlink:** Remove the binary symlink:
+  ```bash
+  rm ~/.local/bin/ship
+  ```
 
 ---
 
