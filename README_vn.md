@@ -26,19 +26,50 @@ CLI triển khai tinh gọn, an toàn hoạt động theo mô hình Staging và 
 
 ### Cài đặt
 
-#### Cách 1: Tạo Alias trong Shell (Khuyên dùng)
-Thêm dòng sau vào tệp cấu hình shell của bạn (`~/.bashrc` hoặc `~/.zshrc`):
+#### Cách 1: Cài đặt từ PyPI (Khuyên dùng)
+```bash
+# Cài bằng pip
+pip install ship-cli
 
+# Hoặc cài bằng pipx (môi trường biệt lập cho các công cụ CLI)
+pipx install ship-cli
+```
+Lệnh này sẽ tự động đăng ký file thực thi `ship` vào PATH của hệ thống.
+
+#### Cách 2: Cài đặt trực tiếp từ Git
+Cài đặt trực tiếp từ GitHub qua `pip` hoặc `pipx`:
+```bash
+# Cài bằng pip
+pip install git+https://github.com/<username>/ship.git
+
+# Hoặc cài bằng pipx
+pipx install git+https://github.com/<username>/ship.git
+```
+
+#### Cách 3: Cài đặt từ mã nguồn tải về (Local Source)
+Clone kho mã nguồn và cài đặt:
+```bash
+git clone https://github.com/<username>/ship.git
+cd ship
+
+# Cài đặt tiêu chuẩn
+pip install .
+
+# Hoặc chế độ phát triển (editable mode)
+pip install -e .
+```
+
+#### Cách 4: Tạo Alias trong Shell
+Thêm dòng sau vào tệp cấu hình shell của bạn (`~/.bashrc` hoặc `~/.zshrc`):
 ```bash
 alias ship="python3 /đường_dẫn_tới/ship/main.py"
 ```
-
 Tải lại cấu hình shell:
 ```bash
 source ~/.bashrc  # hoặc source ~/.zshrc
 ```
 
-#### Cách 2: Tạo liên kết mềm (Symlink) vào PATH
+#### Cách 5: Tạo liên kết mềm (Symlink) vào PATH
 ```bash
 mkdir -p ~/.local/bin
 ln -sf /đường_dẫn_tới/ship/main.py ~/.local/bin/ship

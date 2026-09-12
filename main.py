@@ -55,5 +55,10 @@ from tools.shell import rsync_argv, run_command, ssh_exec_script
 from tools.staging import normalize_path, read_staged_items, validate_staged_item, validated_staging_tempfile, write_staging
 from tools.ui import BOLD, CYAN, GREEN, NC, RED, YELLOW, die, print_err
 
-if __name__ == "__main__":
+def cli() -> None:
     raise SystemExit(main())
+
+
+if __name__ == "__main__":
+    cli()
+

@@ -26,19 +26,50 @@ A lightweight, secure deployment CLI using a Git-like staging model and guardrai
 
 ### Installation
 
-#### Option 1: Shell Alias (Recommended)
-Add the following line to your `~/.bashrc` or `~/.zshrc`:
+#### Option 1: Install from PyPI (Recommended)
+```bash
+# Using pip
+pip install ship-cli
 
+# Or using pipx (isolated environment for CLI tools)
+pipx install ship-cli
+```
+This automatically registers the `ship` executable in your PATH.
+
+#### Option 2: Direct from Git
+Install directly from GitHub via `pip` or `pipx`:
+```bash
+# Using pip
+pip install git+https://github.com/<username>/ship.git
+
+# Or using pipx
+pipx install git+https://github.com/<username>/ship.git
+```
+
+#### Option 3: From Local Source
+Clone the repository and install:
+```bash
+git clone https://github.com/<username>/ship.git
+cd ship
+
+# Standard installation
+pip install .
+
+# Or editable mode for development
+pip install -e .
+```
+
+#### Option 4: Shell Alias
+Add the following line to your `~/.bashrc` or `~/.zshrc`:
 ```bash
 alias ship="python3 /path/to/ship/main.py"
 ```
-
 Reload your shell configuration:
 ```bash
 source ~/.bashrc  # or source ~/.zshrc
 ```
 
-#### Option 2: Symlink to PATH
+#### Option 5: Symlink to PATH
 ```bash
 mkdir -p ~/.local/bin
 ln -sf /path/to/ship/main.py ~/.local/bin/ship
