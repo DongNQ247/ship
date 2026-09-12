@@ -88,6 +88,60 @@ class ShipMainUnitTests(unittest.TestCase):
         expanded = ship.expand_paths(["src"])
         self.assertEqual(expanded, ["src/components/Button.jsx", "src/components/Header.jsx"])
 
+    def test_expand_paths_ignores_folder_patterns(self):
+        # Create nested folders
+        (self.test_root / "folder").mkdir()
+        (self.test_root / "folder" / "a.txt").write_text("a", encoding="utf-8")
+
+        (self.test_root / "sub" / "nested_folder").mkdir(parents=True)
+        (self.test_root / "sub" / "nested_folder" / "b.txt").write_text("b", encoding="utf-8")
+
+        (self.test_root / "valid").mkdir()
+        (self.test_root / "valid" / "c.txt").write_text("c", encoding="utf-8")
+
+        (self.test_root / ".shipignore").write_text("folder/\n*/nested_folder/\n", encoding="utf-8")
+
+        expanded = ship.expand_paths(["."])
+        self.assertIn("valid/c.txt", expanded)
+        self.assertNotIn("folder/a.txt", expanded)
+        self.assertNotIn("sub/nested_folder/b.txt", expanded)
+
+    def test_push_auto_skips_ignored_items(self):
+        (self.test_root / "app.py").write_text("print(1)", encoding="utf-8")
+        (self.test_root / "debug.log").write_text("log", encoding="utf-8")
+
+        # Stage both items
+        ship.write_staging(["app.py", "debug.log"])
+
+        # Add debug.log to ignore AFTER staging
+        (self.test_root / ".shipignore").write_text("*.log\n", encoding="utf-8")
+
+        tmp, count = ship.validated_staging_tempfile()
+        try:
+            content = Path(tmp.name).read_text(encoding="utf-8").splitlines()
+            self.assertEqual(content, ["app.py"])
+            self.assertEqual(count, 1)
+        finally:
+            Path(tmp.name).unlink(missing_ok=True)
+
+    def test_gitignore_negation_and_advanced_wildcards(self):
+        # Create files
+        (self.test_root / "app.log").write_text("log1", encoding="utf-8")
+        (self.test_root / "important.log").write_text("log2", encoding="utf-8")
+        sub = self.test_root / "deep" / "nested" / "pkg"
+        sub.mkdir(parents=True)
+        (sub / "code.ts").write_text("ts", encoding="utf-8")
+        (sub / "code.js").write_text("js", encoding="utf-8")
+
+        # shipignore with negation & double asterisk
+        (self.test_root / ".shipignore").write_text("*.log\n!important.log\n**/*.ts\n", encoding="utf-8")
+
+        expanded = ship.expand_paths(["."])
+        self.assertIn("important.log", expanded)
+        self.assertNotIn("app.log", expanded)
+        self.assertNotIn("deep/nested/pkg/code.ts", expanded)
+        self.assertIn("deep/nested/pkg/code.js", expanded)
+
     def test_find_project_root_locates_ship_directory(self):
         sub_dir = self.test_root / "src" / "deep"
         sub_dir.mkdir(parents=True)
