@@ -1,0 +1,16 @@
+# Python bytecode & cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Ship local runtime (khi test lệnh ship init trực tiếp trong thư mục này)
+.ship/
+.shipignore
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
