@@ -134,6 +134,23 @@ ship clean -y   # Bỏ qua bước xác nhận
 
 ---
 
+## Chế độ Dry-Run (Mô phỏng an toàn)
+
+Cờ `-n` (hoặc `--dry-run`) cho phép bạn kiểm tra và chạy thử toàn bộ quy trình mà **hoàn toàn không ghi đè, tạo mới hay xoá bất kỳ tệp nào** trên máy chủ:
+
+### 1. Mô phỏng quá trình Push (`ship push -n`)
+- **Cơ chế hoạt động:** Hệ thống vẫn thực hiện đầy đủ quy trình kiểm tra an toàn (đối soát staging, kiểm tra `.shipignore`, rà soát `guardrails/deny`), sau đó truyền cờ `-n` vào lệnh `rsync` qua SSH.
+- **Đảm bảo an toàn:** Không có thư mục nào được tạo mới trên server, không có byte dữ liệu nào bị ghi đè.
+- **Xem trước danh sách tệp sẽ đồng bộ (`ship push -n -v`):** Kết hợp cờ `-n` với `-v` (verbose) để in ra danh sách chính xác từng tệp sẽ được tải lên máy chủ:
+  ```bash
+  ship push -n -v
+  ```
+
+### 2. Mô phỏng quá trình Clean (`ship clean -n`)
+- **Cơ chế hoạt động:** Kiểm tra xem thư mục đích `REMOTE_DIR` có vượt qua các chốt chặn an toàn `allowed` và `protected` hay không, sau đó in ra thông báo xác nhận đường dẫn sẽ bị tác động mà không thực thi lệnh xoá (`rm -rf`).
+
+---
+
 ## Bảng tra cứu lệnh
 
 | Lệnh | Mô tả | Tùy chọn phổ biến |

@@ -134,6 +134,23 @@ ship clean -y   # Skip confirmation
 
 ---
 
+## Dry-Run Mode
+
+Dry-run (`-n` or `--dry-run`) lets you simulate actions safely without modifying any files on the remote server:
+
+### 1. Simulating Push (`ship push -n`)
+- **What it does:** Executes the complete staging validation pipeline, parses ignore and guardrail rules, and runs `rsync` with the `-n` (dry-run) flag.
+- **Safety guarantee:** No remote directories are created, no files are written, and existing remote files remain untouched.
+- **Preview file changes (`ship push -n -v`):** Combining dry-run with verbose output lists every single file that would be uploaded or synchronized:
+  ```bash
+  ship push -n -v
+  ```
+
+### 2. Simulating Clean (`ship clean -n`)
+- **What it does:** Verifies that the target `REMOTE_DIR` passes `allowed` and `protected` guardrails, then displays the exact path that would be removed without executing `rm -rf`.
+
+---
+
 ## Command Reference
 
 | Command | Description | Common Flags |
