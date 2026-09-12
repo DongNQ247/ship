@@ -1,198 +1,171 @@
-# 🚢 ship — Git-like File Deployment CLI
+# ship
 
-CLI tinh gọn hoạt động theo cơ chế **Staging & Guardrails** (tương tự mô hình làm việc của Git) để đồng bộ và triển khai file/folder từ máy local lên remote server thông qua SSH và `rsync`.
-
----
-
-## ✨ Điểm nổi bật (Features)
-
-- 🔄 **Quy trình Git-like quen thuộc:** `init` ➔ `add` ➔ `status` ➔ `push`.
-- 🛡️ **Hệ thống Guardrails bảo mật nhiều lớp:**
-  - Chống tấn công Path Traversal (`../`, symlink trỏ ra ngoài project root, absolute path escape).
-  - Tự động chặn các file bí mật, nhạy cảm (`.env`, `*.env`, `.ssh/`, `*.pem`, `id_rsa`, `.ship/`, `.git/`).
-  - Bảo vệ thư mục hệ thống trên remote (`/`, `/home`, `/root`, `/etc*`, `/var*`, `/usr*`, `/bin*`,...).
-- 🚫 **Hỗ trợ `.shipignore`:** Bỏ qua dependencies (`node_modules/`, `venv/`), cache, build artifacts, logs.
-- 🔍 **Xem trước & Dry-run:** Cho phép `ship inspect` kiểm tra remote và `ship push --dry-run` mô phỏng trước khi push thực tế.
-- ⚡ **Zero External Python Dependencies:** Sử dụng 100% Python standard library, kết hợp các công cụ chuẩn Linux (`ssh`, `rsync`).
+A lightweight, secure deployment CLI using a Git-like staging model and guardrails to synchronize files and directories to remote servers over SSH and rsync.
 
 ---
 
-## 📦 Cài đặt & Thiết lập (Setup)
+## Features
 
-### Yêu cầu môi trường
-- **Python 3.10+**
-- **OpenSSH client** (`ssh`) & **rsync**
+- **Git-like Workflow:** Familiar commands (`init`, `add`, `remove`, `status`, `push`).
+- **Multi-layer Guardrails:**
+  - Path traversal and symlink escape defenses.
+  - Automatic blocking of sensitive files (`.env`, `.git/`, `.ssh/`, `.ship/`, private keys).
+  - Protection of remote system directories (`/`, `/home`, `/root`, `/etc`, `/var`, `/usr`, `/bin`).
+- **Ignore Rules:** Project-level `.shipignore` to exclude dependencies, cache, logs, and build artifacts.
+- **Dry-run & Inspection:** Inspect remote directory structures and preview synchronization before applying changes.
+- **Zero Dependencies:** Built entirely with Python standard library, standard OpenSSH, and rsync.
 
-### Cách 1: Tạo Alias trong Shell (Khuyên dùng)
-Thêm dòng sau vào file cấu hình shell (`~/.bashrc` hoặc `~/.zshrc`):
+---
+
+## Requirements & Setup
+
+### Prerequisites
+- Python 3.10+
+- OpenSSH client (`ssh`)
+- rsync
+
+### Installation
+
+#### Option 1: Shell Alias (Recommended)
+Add the following line to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-alias ship="python3 /đường_dẫn_tới/ship/main.py"
+alias ship="python3 /path/to/ship/main.py"
 ```
 
-Sau đó tải lại cấu hình:
+Reload your shell configuration:
 ```bash
-source ~/.bashrc   # hoặc source ~/.zshrc
+source ~/.bashrc  # or source ~/.zshrc
 ```
 
-### Cách 2: Tạo Symlink vào PATH
+#### Option 2: Symlink to PATH
 ```bash
 mkdir -p ~/.local/bin
-ln -sf /đường_dẫn_tới/ship/main.py ~/.local/bin/ship
-chmod +x /đường_dẫn_tới/ship/main.py
+ln -sf /path/to/ship/main.py ~/.local/bin/ship
+chmod +x /path/to/ship/main.py
 ```
 
 ---
 
-## 💡 Mô hình hoạt động (Architecture)
+## Architecture
 
-Khi đứng ở bất kỳ thư mục dự án nào, chạy `ship init` sẽ tạo môi trường quản lý độc lập:
+Running `ship init` inside any project directory creates an isolated management workspace:
 
 ```text
 my-project/
-├── .ship/                      # Thư mục quản lý cấu hình & trạng thái (như .git/)
-│   ├── config.env              # Thông tin kết nối SSH (host, user, port, remote_dir)
-│   ├── guardrails/             # Các chính sách an toàn
-│   │   ├── allowed             # Regex quy định đường dẫn REMOTE_DIR hợp lệ
-│   │   ├── deny                # Pattern chặn tuyệt đối các file nhạy cảm
-│   │   └── protected           # Pattern bảo vệ thư mục hệ thống trên server
+├── .ship/
+│   ├── config.env              # SSH connection settings (host, port, user, remote_dir)
+│   ├── guardrails/
+│   │   ├── allowed             # Regular expressions for permitted remote directories
+│   │   ├── deny                # Patterns for sensitive files refused by ship
+│   │   └── protected           # Remote system paths protected against deletion/sync
 │   └── state/
-│       └── files               # Staging manifest (danh sách file/thư mục chuẩn bị push)
-├── .shipignore                 # Quy tắc loại trừ (tương tự .gitignore)
+│       └── files               # Staging manifest of items ready to push
+├── .shipignore                 # Exclusion rules (similar to .gitignore)
 └── ...
 ```
 
 ---
 
-## 🚀 Hướng dẫn sử dụng từng bước (Quickstart)
+## Quickstart
 
-### Bước 1: Khởi tạo dự án
-Đứng tại thư mục dự án cần deploy:
+### 1. Initialize Workspace
+Run `ship init` in your project root:
 ```bash
 ship init
 ```
-*Hệ thống sẽ hỏi thông tin kết nối máy chủ (Host/IP, SSH Port, SSH User, Remote Directory) và tự động tạo `.ship/` cùng `.shipignore`.*
+Follow the interactive prompts to configure server credentials and remote directory. To skip prompts with default templates, use `ship init --no-input`.
 
-*(Nếu muốn khởi tạo tự động không qua prompt, dùng `ship init --no-input`)*.
-
----
-
-### Bước 2: Kiểm tra kết nối trước khi deploy
+### 2. Verify Environment & Connection
 ```bash
 ship preflight
 ```
-*Lệnh này kiểm tra các công cụ trên máy local (`ssh`, `rsync`, `python3`), kiểm tra cấu hình và thử kết nối SSH tới server.*
+Validates local tools (`ssh`, `rsync`, `python3`), configuration files, and tests SSH connectivity.
 
----
-
-### Bước 3: Thêm file vào Staging
+### 3. Stage Files
 ```bash
-# Thêm toàn bộ dự án hiện tại
+# Stage entire project
 ship add .
 
-# Hoặc chỉ định từng file / thư mục cụ thể
+# Stage specific files or directories
 ship add src/ public/ package.json
 ```
-*`ship` sẽ tự động kiểm tra đối soát với `.shipignore` và các chính sách bảo mật trong `guardrails/deny`.*
 
----
-
-### Bước 4: Kiểm tra trạng thái Staging
+### 4. Check Staging Status
 ```bash
 ship status
 ```
-*Hiển thị cây thư mục dự án cùng danh sách chi tiết các file đã được staged sẵn sàng push.*
+Displays the local file tree and currently staged items.
 
----
-
-### Bước 5: Bỏ file khỏi Staging (nếu cần)
+### 5. Inspect Remote Target
 ```bash
-# Bỏ một hoặc nhiều file cụ thể
-ship remove src/temp.py
-
-# Xoá toàn bộ danh sách staging
-ship remove --all
-```
-
----
-
-### Bước 6: Kiểm tra thư mục trên Remote Server
-```bash
-# Xem cây thư mục trên server (mặc định độ sâu 2)
+# Inspect remote directory tree (default depth: 2)
 ship inspect
 
-# Xem với độ sâu tùy chỉnh (ví dụ: depth = 3)
+# Specify depth
 ship inspect 3
 ```
 
----
-
-### Bước 7: Đồng bộ lên Remote Server (Push)
+### 6. Synchronize (Push)
 ```bash
-# Chạy thử (Dry-run) để xem trước file nào sẽ được tải lên mà không thay đổi server
+# Dry-run preview
 ship push -n
 
-# Đồng bộ thực tế (rsync qua SSH)
+# Synchronize staged files to remote server
 ship push
 
-# Đồng bộ kèm log chi tiết và tiến độ (Verbose)
+# Verbose mode with transfer progress
 ship push -v
 ```
 
----
-
-### Bước 8: Dọn dẹp Remote Server (Clean)
+### 7. Unstage or Clean
 ```bash
-# Chạy thử dry-run
-ship clean -n
+# Unstage specific paths
+ship remove src/temp.py
 
-# Xóa thư mục REMOTE_DIR trên server (có cảnh báo xác nhận)
-ship clean
+# Clear entire staging area
+ship remove --all
 
-# Xóa trực tiếp không cần xác nhận
-ship clean -y
+# Clean remote destination directory (guarded)
+ship clean -n   # Dry-run
+ship clean      # Interactive confirmation
+ship clean -y   # Skip confirmation
 ```
 
 ---
 
-## 📋 Bảng tổng hợp các lệnh (Command Reference)
+## Command Reference
 
-> *Bạn có thể chạy lệnh `ship <command>` ở bất kỳ thư mục con nào bên trong dự án.*
-
-| Lệnh | Mô tả | Tuỳ chọn phổ biến |
+| Command | Description | Common Flags |
 | :--- | :--- | :--- |
-| `ship init` | Khởi tạo môi trường `.ship/` và `.shipignore` | `--no-input` |
-| `ship preflight` | Kiểm tra công cụ môi trường & kết nối SSH | |
-| `ship add <paths...>` | Thêm file/thư mục vào staging manifest | |
-| `ship remove <paths...>` | Bỏ file/thư mục khỏi staging manifest | `--all` |
-| `ship status` | Xem cây thư mục và danh sách file đã stage | `-L <depth>` |
-| `ship inspect [depth]` | Xem trước cấu trúc cây thư mục trên remote | `depth` (mặc định 2) |
-| `ship push` | Đồng bộ file đã staged lên remote qua SSH/rsync | `-n` (dry-run), `-v` (verbose) |
-| `ship clean` | Xoá thư mục đích trên server (được bảo vệ) | `-n` (dry-run), `-y` (skip confirm) |
+| `ship init` | Initialize `.ship/` workspace and `.shipignore` | `--no-input` |
+| `ship preflight` | Check environment tools and test SSH connection | |
+| `ship add <paths...>` | Stage files or directories for deployment | |
+| `ship remove <paths...>` | Remove paths from staging manifest | `--all` |
+| `ship status` | View workspace structure and staged files | `-L <depth>` |
+| `ship inspect [depth]` | Inspect remote directory tree | `depth` (default: 2) |
+| `ship push` | Synchronize staged items to remote server | `-n` (dry-run), `-v` (verbose) |
+| `ship clean` | Delete remote destination folder | `-n` (dry-run), `-y` (yes) |
 
 ---
 
-## 🛡️ Cơ chế an toàn (Guardrails & Policies)
+## Guardrails & Policies
 
-1. **`.shipignore`**:
-   - Loại trừ file tạm, logs, build outputs (`dist/`, `build/`), môi trường ảo (`.venv/`, `node_modules/`).
-2. **`.ship/guardrails/allowed`**:
-   - Regex quy định các đường dẫn thư mục `REMOTE_DIR` được phép triển khai (mặc định dạng `/home/<user>/<project>(/.*)?`).
-3. **`.ship/guardrails/deny`**:
-   - Chặn tuyệt đối không cho phép stage hay push các file nhạy cảm (`.env`, `*.env`, `.ssh/`, `.git/`, `*.pem`, `id_rsa`,...).
-4. **`.ship/guardrails/protected`**:
-   - Ngăn chặn triệt để nguy cơ phá hoại các thư mục hệ thống (`/`, `/home`, `/root`, `/etc*`, `/var*`, `/usr*`, `/bin*`,...).
+- **`.shipignore`**: Excludes transient files, build outputs, and dependencies (`node_modules/`, `venv/`, `.cache/`).
+- **`.ship/guardrails/allowed`**: Enforces permitted `REMOTE_DIR` targets (defaults to `/home/<user>/<project>(/.*)?`).
+- **`.ship/guardrails/deny`**: Hard block on staging or pushing secrets (`.env`, `*.env`, `.ssh/`, `.git/`, `*.pem`, `id_rsa`).
+- **`.ship/guardrails/protected`**: Prevents accidental modification or deletion of critical root paths (`/`, `/home`, `/root`, `/etc`, `/var`, `/usr`, `/bin`).
 
 ---
 
-## 🧪 Kiểm thử (Testing)
+## Testing
 
-Dự án đi kèm bộ kiểm thử tự động toàn diện:
+Run the automated test suite:
 
 ```bash
-# 1. Chạy Unit Tests
+# Unit tests
 python3 -m unittest discover tests
 
-# 2. Chạy Security & Regression Test Suite (54 kịch bản phòng vệ an ninh)
+# Security and regression test suite
 bash tests/test_security.sh
 ```
